@@ -1,0 +1,11 @@
+{
+  "id": "headmad.qr-tools",
+  "name": "qr-tools",
+  "version": "1.0.0",
+  "author": "headmad",
+  "description": "Генератор и сканер QR-кодов. Фоновый API: генерация QR в SVG для других приложений.",
+  "icon": "public/assets/icon.svg",
+  "permissions": [],
+  "dependencies": [],
+  "routers": { "app": "public", "client": "public", "web": "public", "preview": "public" }
+}

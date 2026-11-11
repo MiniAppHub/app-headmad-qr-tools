@@ -1,0 +1,8 @@
+{
+  "name": "app-headmad-qr-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QR-Tools: генератор и сканер QR-кодов для MiniAppHub",
+  "scripts": { "check": "node scripts/check-manifest.mjs" },
+  "license": "MIT"
+}
