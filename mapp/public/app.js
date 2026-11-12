@@ -2,10 +2,9 @@
  * QR-Tools: генерация (qrcode-generator, SVG) и чтение (BarcodeDetector, если доступен).
  * @module app
  */
-import { MiniApp } from './api/sdk.js';
+import { mapp } from './api/sdk.js';
 
 const $ = (id) => document.getElementById(id);
-const app = new MiniApp();
 let lastSvg = '';
 
 // Вкладки
@@ -34,8 +33,6 @@ $('make').addEventListener('click', async () => {
   lastSvg = makeSvg(text);
   $('qr').innerHTML = lastSvg;
   $('save').hidden = false;
-  // Сообщаем оболочке (не обязательно; ошибка игнорируется)
-  app.call('ui.toast', { text: 'QR-код готов' });
 });
 
 $('save').addEventListener('click', () => {

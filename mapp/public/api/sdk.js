@@ -1,44 +1,40 @@
 /**
- * Клиентский SDK MiniAppHub (в стиле Telegram Bot API: { ok, result }).
- * Общается с оболочкой через window.parent.postMessage.
+ * Клиентский SDK MiniAppHub. Вызовы: mapp.shell('getSettings').
+ * Ответ всегда { ok, result | error }.
  * @module sdk
  */
+const FROM_APP = 'mapp';
+const FROM_SHELL = 'mapp-shell';
 
-/**
- * @typedef {{ ok: true, result: any } | { ok: false, error: string }} ApiResponse
- */
-
-export class MiniApp {
-  constructor() {
-    this._seq = 0;
-    this._pending = new Map();
-    window.addEventListener('message', (e) => {
-      const msg = e.data;
-      if (!msg || msg.source !== 'appshell' || msg.id == null) return;
-      const cb = this._pending.get(msg.id);
-      if (cb) {
-        this._pending.delete(msg.id);
-        cb(msg.response);
-      }
+export class Mapp {
+  constructor(target = window.parent) {
+    this.target = target;
+    this.seq = 0;
+    this.pending = new Map();
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (!msg || msg.source !== FROM_SHELL || msg.id == null) return;
+      const done = this.pending.get(msg.id);
+      if (done) { this.pending.delete(msg.id); done(msg.response); }
     });
   }
 
-  /**
-   * Вызов метода оболочки, например `system.info` или `ui.theme`.
-   * @param {string} method
-   * @param {Object} [params]
-   * @param {number} [timeoutMs=5000]
-   * @returns {Promise<ApiResponse>}
-   */
-  call(method, params = {}, timeoutMs = 5000) {
-    const id = ++this._seq;
+  /** Запущено ли внутри оболочки. */
+  static get inShell() { return window.parent !== window; }
+
+  _call(namespace, action, params = {}, timeout = 8000) {
+    if (window.parent === window) return Promise.resolve({ ok: false, error: 'not-in-shell' });
+    const id = ++this.seq;
     return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this._pending.delete(id);
-        resolve({ ok: false, error: 'timeout' });
-      }, timeoutMs);
-      this._pending.set(id, (resp) => { clearTimeout(timer); resolve(resp); });
-      window.parent.postMessage({ source: 'miniapp', id, method, params }, '*');
+      const timer = setTimeout(() => { this.pending.delete(id); resolve({ ok: false, error: 'timeout' }); }, timeout);
+      this.pending.set(id, (response) => { clearTimeout(timer); resolve(response); });
+      this.target.postMessage({ source: FROM_APP, id, namespace, action, params }, '*');
     });
   }
+
+  shell(action, params) { return this._call('shell', action, params); }
+  apps(action, params) { return this._call('apps', action, params); }
+  system(action, params) { return this._call('system', action, params); }
 }
+
+export const mapp = new Mapp();
